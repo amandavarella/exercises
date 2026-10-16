@@ -1,7 +1,9 @@
 # Exercises
 
-A simple web page for quick reference to my exercise programme. Tap an exercise to watch its demo video.
+My weekly exercise programme. Pick a week, then tap an exercise to watch its demo video.
 
 Live site: https://amandavarella.github.io/exercises/
 
-To add or edit an exercise, update the `EXERCISES` list near the bottom of `index.html`.
+## Adding a week
+
+Edit `weeks.js` and add a new block to the `WEEKS` list with the week number and its exercises. The home page shows the highest week number as "This week". Each week's page is `week.html?w=<number>`.

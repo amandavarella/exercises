@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>My Exercises</title>
-<meta name="description" content="Quick reference for my exercise programme. Tap any exercise to watch the demo video.">
+<meta name="description" content="My weekly exercise programme. Pick a week and tap any exercise to watch the demo.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Exercises">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
 <style>
   :root {
@@ -13,10 +15,14 @@
     --text: #1d1d1f;
     --muted: #6b6b70;
     --accent: #2f6f5e;
+    --accent-2: #4e9a7f;
     --accent-soft: #e3efe9;
+    --warm: #e8875b;
     --border: #e4e2dc;
     --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.06);
-    --overlay: rgba(10,10,12,.85);
+    --hero-from: #2f6f5e;
+    --hero-to: #1f4d5c;
+    --track: #e9e7e1;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -25,9 +31,14 @@
       --text: #f0f0f2;
       --muted: #a0a0a8;
       --accent: #6cc3a7;
+      --accent-2: #4e9a7f;
       --accent-soft: #1f3530;
+      --warm: #f0a07a;
       --border: #2c2c31;
       --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+      --hero-from: #1f4d43;
+      --hero-to: #173544;
+      --track: #2c2c31;
     }
   }
   :root[data-theme="dark"] {
@@ -36,9 +47,14 @@
     --text: #f0f0f2;
     --muted: #a0a0a8;
     --accent: #6cc3a7;
+    --accent-2: #4e9a7f;
     --accent-soft: #1f3530;
+    --warm: #f0a07a;
     --border: #2c2c31;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    --hero-from: #1f4d43;
+    --hero-to: #173544;
+    --track: #2c2c31;
   }
 
   * { box-sizing: border-box; }
@@ -49,340 +65,218 @@
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
-
-  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-  h1 { font-size: 1.75rem; margin: 0; letter-spacing: -.01em; }
-  .sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
-  .progress { font-size: .9rem; color: var(--muted); white-space: nowrap; }
-  .progress button + button { margin-left: 4px; }
-  .progress button {
-    margin-left: 8px; font: inherit; font-size: .85rem; color: var(--accent);
-    background: none; border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+  .wrap {
+    max-width: 760px; margin: 0 auto;
+    padding: max(28px, env(safe-area-inset-top)) 16px 48px;
   }
 
-  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .greeting { font-size: .95rem; color: var(--muted); margin: 0; }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 4px 0 22px; letter-spacing: -.02em; }
+  h1 .wave { display: inline-block; transform-origin: 70% 70%; animation: wave 1.8s ease-in-out 0.4s 1; }
+  @keyframes wave { 0%,100% { transform: rotate(0); } 20%,60% { transform: rotate(14deg); } 40%,80% { transform: rotate(-8deg); } }
 
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
-    transition: opacity .2s;
+  /* Featured week */
+  .hero {
+    position: relative; display: block; overflow: hidden; color: #fff; text-decoration: none;
+    border-radius: 22px; padding: 22px 20px 20px;
+    background: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.14), transparent 60%),
+                linear-gradient(145deg, var(--hero-from), var(--hero-to));
+    box-shadow: 0 10px 30px rgba(31,77,67,.28);
+    transition: transform .15s ease;
   }
-  .card.done { opacity: .55; }
-  .card.dragging { opacity: .9; box-shadow: 0 12px 32px rgba(0,0,0,.25); outline: 2px solid var(--accent); position: relative; z-index: 2; }
-  body.is-dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+  .hero:active { transform: scale(.99); }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .eyebrow {
+    display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 999px;
+  }
+  .big { font-size: 3.4rem; font-weight: 800; line-height: 1; margin: 12px 0 4px; letter-spacing: -.03em; }
+  .hero .meta { opacity: .85; font-size: .95rem; margin: 0; }
 
-  .handle {
-    flex: none; width: 30px; height: 30px; border: 0; border-radius: 8px; padding: 0;
-    background: none; color: var(--muted); cursor: grab; display: grid; place-items: center;
-    touch-action: none;
-  }
-  .handle:hover, .handle:focus-visible { background: var(--accent-soft); color: var(--accent); }
-  .handle svg { width: 18px; height: 18px; fill: currentColor; }
-  .title-row h2 { flex: 1; }
+  .ring { flex: none; position: relative; width: 92px; height: 92px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 9; }
+  .ring .bg { stroke: rgba(255,255,255,.18); }
+  .ring .fg { stroke: #fff; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1); }
+  .ring-label { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.1; }
+  .ring-label b { font-size: 1.3rem; display: block; }
+  .ring-label span { font-size: .7rem; opacity: .85; }
 
-  .thumb {
-    position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; border: 0;
-    background: #000 center / cover no-repeat; cursor: pointer;
+  .thumbs { display: flex; margin: 18px 0 16px; }
+  .thumbs span {
+    width: 48px; height: 48px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9);
+    background: #000 center / cover no-repeat; margin-left: -10px;
   }
-  .thumb::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,0) 55%);
+  .thumbs span:first-child { margin-left: 0; }
+  .thumbs .more {
+    display: grid; place-items: center; font-size: .8rem; font-weight: 700;
+    background: rgba(255,255,255,.2); color: #fff;
   }
-  .play {
-    position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.92);
-    display: grid; place-items: center; transition: transform .15s;
+
+  .cta {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff; color: var(--hero-to); border-radius: 14px; padding: 14px 16px; font-weight: 700;
   }
-  .play svg { width: 22px; height: 22px; margin-left: 3px; fill: #111; }
-  .thumb:hover .play, .thumb:focus-visible .play { transform: translate(-50%, -50%) scale(1.08); }
-  .thumb:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .cta .arrow { transition: transform .2s; }
+  .hero:hover .cta .arrow { transform: translateX(4px); }
+
+  /* Coach's cue */
+  .cue {
+    margin: 18px 0 30px; padding: 16px 18px; border-radius: 16px; background: var(--card);
+    border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; gap: 14px; align-items: flex-start;
+  }
+  .cue .icon { font-size: 1.5rem; line-height: 1; }
+  .cue h3 { margin: 0 0 2px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--warm); }
+  .cue p { margin: 0; }
+  .cue small { color: var(--muted); }
+  .cue button {
+    margin-left: auto; flex: none; border: 0; background: none; color: var(--muted); font-size: 1.1rem;
+    cursor: pointer; padding: 4px; border-radius: 8px;
+  }
+  .cue button:hover { color: var(--accent); background: var(--accent-soft); }
+
+  /* All weeks */
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  .weeks { display: grid; gap: 10px; }
+  .week {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow);
+    color: var(--text); text-decoration: none; transition: transform .15s, border-color .15s;
+  }
+  .week:hover { border-color: var(--accent); transform: translateY(-1px); }
   .badge {
-    position: absolute; z-index: 1; left: 10px; bottom: 8px; color: #fff; font-size: .75rem;
-    font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+    font-weight: 800; font-size: 1.15rem; background: var(--accent-soft); color: var(--accent);
   }
+  .week.complete .badge { background: var(--accent); color: #fff; }
+  .week .info { flex: 1; min-width: 0; }
+  .week .name { font-weight: 700; }
+  .week .sub { color: var(--muted); font-size: .85rem; }
+  .bar { height: 6px; border-radius: 999px; background: var(--track); margin-top: 8px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width .8s ease; }
+  .chev { color: var(--muted); font-size: 1.2rem; }
 
-  .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  h2 { font-size: 1.1rem; margin: 0; }
-  .check {
-    flex: none; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border);
-    background: none; cursor: pointer; display: grid; place-items: center; color: transparent;
+  footer { margin-top: 34px; color: var(--muted); font-size: .85rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
   }
-  .check svg { width: 16px; height: 16px; }
-  .card.done .check { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-  .tips { margin: 0; padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; font-size: .92rem; }
-  .tips p { margin: 0; }
-  .tips p + p { margin-top: 6px; }
-
-  .alt { display: flex; flex-wrap: wrap; gap: 8px; }
-  .alt button {
-    font: inherit; font-size: .85rem; color: var(--accent); background: none; cursor: pointer;
-    border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px;
-  }
-
-  /* Video modal */
-  .modal {
-    position: fixed; inset: 0; z-index: 10; background: var(--overlay);
-    display: none; align-items: center; justify-content: center; padding: 16px;
-  }
-  .modal.open { display: flex; }
-  .player { position: relative; width: 100%; max-width: 900px; }
-  .player.short { max-width: min(420px, calc((100vh - 120px) * 9 / 16)); }
-  .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
-  .player.short .frame { aspect-ratio: 9 / 16; }
-  .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-  .player-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; color: #fff; }
-  .player-bar h3 { margin: 0; font-size: 1rem; }
-  .player-bar a { color: #cfe; font-size: .85rem; }
-  .close {
-    flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
-    background: rgba(255,255,255,.15); color: #fff; font-size: 1.4rem; line-height: 1;
-  }
-
-  footer { margin-top: 32px; color: var(--muted); font-size: .85rem; text-align: center; }
-
-  @media (max-width: 520px) {
-    header { flex-direction: column; align-items: flex-start; }
-    h1 { font-size: 1.5rem; }
+  @media (max-width: 400px) {
+    .big { font-size: 2.8rem; }
+    .ring { width: 80px; height: 80px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <p class="greeting" id="greeting"></p>
+  <h1 id="headline"></h1>
+
+  <a class="hero" id="hero"></a>
+
+  <div class="cue" id="cue" hidden>
+    <div class="icon" aria-hidden="true">💡</div>
     <div>
-      <h1>My Exercises</h1>
-      <p class="sub">Tap any exercise to watch the demo. Drag the ⠿ handle to reorder.</p>
+      <h3>Coach's cue</h3>
+      <p id="cue-text"></p>
+      <small id="cue-src"></small>
     </div>
-    <div class="progress"><span id="count"></span><button id="reset" type="button">Reset ticks</button><button id="reset-order" type="button">Reset order</button></div>
-  </header>
-
-  <main class="grid" id="grid"></main>
-
-  <footer>Tick each exercise off as you go. Your progress and order are saved on this device.</footer>
-</div>
-
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-  <div class="player" id="player">
-    <div class="player-bar">
-      <div>
-        <h3 id="modal-title"></h3>
-        <a id="modal-link" href="#" target="_blank" rel="noopener">Open in YouTube</a>
-      </div>
-      <button class="close" id="close" type="button" aria-label="Close video">&times;</button>
-    </div>
-    <div class="frame" id="frame"></div>
+    <button type="button" id="cue-next" aria-label="Show another cue">↻</button>
   </div>
+
+  <h2>All weeks</h2>
+  <div class="weeks" id="weeks"></div>
+
+  <footer>Tap a week to see its exercises. Your progress is saved on this device.</footer>
 </div>
 
+<script src="weeks.js"></script>
 <script>
-  // Add or edit exercises here. "short: true" means a vertical YouTube Short.
-  const EXERCISES = [
-    {
-      name: "Lying Press",
-      videos: [{ id: "d33SDkfL1yQ", short: true }]
-    },
-    {
-      name: "Single Arm Row",
-      videos: [{ id: "i9BJwVCK5VQ", short: true }]
-    },
-    {
-      name: "Pallof Press (Banded)",
-      videos: [{ id: "y1fOBVtANdM", short: false }]
-    },
-    {
-      name: "Standing Banded Abduction",
-      tips: [
-        "Keep your trunk nice and straight as you abduct (move away) the leg.",
-        "Use whichever band feels best or that you have access to. A long band needs to be tied."
-      ],
-      videos: [
-        { id: "8Ax7lJ3I7pk", short: true, label: "Friend demo (small band)" },
-        { id: "7Sph-K6Nmgc", short: true, label: "Long band version" }
-      ]
-    },
-    {
-      name: "Alternating Lunges",
-      videos: [{ id: "tTej-ax9XiA", short: false }]
-    },
-    {
-      name: "Glute Bridge with Band Abduction",
-      tips: [
-        "Before you come up, pelvic tilt first: bring the top of your hips toward your belly button and squeeze your bum.",
-        "Then drive up into the glute bridge end position.",
-        "From the top, abduct your knees out against the band."
-      ],
-      videos: [{ id: "tv9dFw4zPA0", short: true }]
-    },
-    {
-      name: "Squat with a Band",
-      tips: ["Band goes above the knees."],
-      videos: [{ id: "ExfeIVSC1HU", short: true }]
-    }
-  ];
+  const weeks = [...WEEKS].sort((a, b) => b.number - a.number);
+  const latest = weeks[0];
 
-  const STORE_KEY = "exercises-done";
-  const load = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; } };
-  const save = (done) => { try { localStorage.setItem(STORE_KEY, JSON.stringify(done)); } catch {} };
-  let done = new Set(load());
+  const progress = (w) => {
+    const names = new Set(w.exercises.map(e => e.name));
+    const done = Store.get(Store.doneKey(w.number), []).filter(n => names.has(n)).length;
+    return { done, total: w.exercises.length, pct: w.exercises.length ? done / w.exercises.length : 0 };
+  };
+  const videoCount = (w) => w.exercises.reduce((n, e) => n + e.videos.length, 0);
+  const href = (w) => `week.html?w=${w.number}`;
 
-  const ORDER_KEY = "exercises-order";
-  const loadOrder = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || []; } catch { return []; } };
-  const saveOrder = (order) => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch {} };
+  // Greeting and headline
+  const h = new Date().getHours();
+  document.getElementById("greeting").textContent =
+    h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const p = progress(latest);
+  document.getElementById("headline").innerHTML =
+    p.done === 0 ? `Ready to move? <span class="wave">👋</span>`
+    : p.done < p.total ? `Nice work, keep going <span class="wave">💪</span>`
+    : `Week ${latest.number} done <span class="wave">🎉</span>`;
 
-  // Apply the saved order. Exercises not in the saved list (e.g. newly added) go at the end.
-  const savedOrder = loadOrder();
-  const rank = (ex) => { const i = savedOrder.indexOf(ex.name); return i === -1 ? Infinity : i; };
-  const ordered = EXERCISES.map((ex, i) => ({ ex, i })).sort((a, b) => rank(a.ex) - rank(b.ex) || a.i - b.i).map(o => o.ex);
+  // Featured week
+  const R = 40, C = 2 * Math.PI * R;
+  const thumbs = latest.exercises.slice(0, 5)
+    .map(e => `<span style="background-image:url('https://i.ytimg.com/vi/${e.videos[0].id}/default.jpg')"></span>`).join("")
+    + (latest.exercises.length > 5 ? `<span class="more">+${latest.exercises.length - 5}</span>` : "");
+  const cta = p.done === 0 ? "Start workout" : p.done < p.total ? "Continue workout" : "Review this week";
+  const hero = document.getElementById("hero");
+  hero.href = href(latest);
+  hero.innerHTML = `
+    <div class="hero-top">
+      <div>
+        <span class="eyebrow">This week</span>
+        <div class="big">Week ${latest.number}</div>
+        <p class="meta">${p.total} exercises · ${videoCount(latest)} videos</p>
+      </div>
+      <div class="ring" role="img" aria-label="${p.done} of ${p.total} exercises done">
+        <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="${R}"/>
+          <circle class="fg" cx="50" cy="50" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
+        <div class="ring-label"><div><b>${p.done}/${p.total}</b><span>done</span></div></div>
+      </div>
+    </div>
+    <div class="thumbs" aria-hidden="true">${thumbs}</div>
+    <div class="cta"><span>${cta}</span><span class="arrow">→</span></div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    hero.querySelector(".fg").style.strokeDashoffset = C * (1 - p.pct);
+  }));
 
-  const ytUrl = (v) => v.short ? `https://www.youtube.com/shorts/${v.id}` : `https://www.youtube.com/watch?v=${v.id}`;
-  const playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
-  const gripIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
-  const tickIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>';
-
-  const grid = document.getElementById("grid");
-
-  ordered.forEach((ex) => {
-    const main = ex.videos[0];
-    const card = document.createElement("article");
-    card.dataset.name = ex.name;
-    card.className = "card" + (done.has(ex.name) ? " done" : "");
-    card.innerHTML = `
-      <button class="thumb" type="button" aria-label="Play ${ex.name} video"
-        style="background-image:url('https://i.ytimg.com/vi/${main.id}/hqdefault.jpg')">
-        <span class="play">${playIcon}</span>
-        <span class="badge"><span class="num"></span>${main.short ? " · Short" : ""}</span>
-      </button>
-      <div class="body">
-        <div class="title-row">
-          <button class="handle" type="button" aria-label="Reorder ${ex.name}. Drag, or use arrow keys">${gripIcon}</button>
-          <h2>${ex.name}</h2>
-          <button class="check" type="button" aria-label="Mark ${ex.name} as done" aria-pressed="${done.has(ex.name)}">${tickIcon}</button>
-        </div>
-        ${ex.tips ? `<div class="tips">${ex.tips.map(t => `<p>${t}</p>`).join("")}</div>` : ""}
-        ${ex.videos.length > 1 ? `<div class="alt">${ex.videos.map((v, j) =>
-          `<button type="button" data-v="${j}">▶ ${v.label || "Video " + (j + 1)}</button>`).join("")}</div>` : ""}
-      </div>`;
-
-    card.querySelector(".thumb").addEventListener("click", () => openVideo(ex, main));
-    card.querySelectorAll(".alt button").forEach(b =>
-      b.addEventListener("click", () => openVideo(ex, ex.videos[+b.dataset.v])));
-    const check = card.querySelector(".check");
-    check.addEventListener("click", () => {
-      done.has(ex.name) ? done.delete(ex.name) : done.add(ex.name);
-      card.classList.toggle("done", done.has(ex.name));
-      check.setAttribute("aria-pressed", done.has(ex.name));
-      save([...done]);
-      updateCount();
-    });
-    setupDrag(card);
-    grid.appendChild(card);
-  });
-  renumber();
-
-  function renumber() {
-    grid.querySelectorAll(".card").forEach((c, i) => {
-      c.querySelector(".num").textContent = String(i + 1).padStart(2, "0");
-    });
-  }
-  function persistOrder() {
-    saveOrder([...grid.querySelectorAll(".card")].map(c => c.dataset.name));
-    renumber();
+  // Coach's cue: a random tip from any week
+  const cues = WEEKS.flatMap(w => w.exercises.flatMap(e => (e.tips || []).map(t => ({ t, e: e.name, w: w.number }))));
+  if (cues.length) {
+    let last = -1;
+    const show = () => {
+      let i;
+      do { i = Math.floor(Math.random() * cues.length); } while (cues.length > 1 && i === last);
+      last = i;
+      document.getElementById("cue-text").textContent = cues[i].t;
+      document.getElementById("cue-src").textContent = `${cues[i].e} · Week ${cues[i].w}`;
+    };
+    show();
+    document.getElementById("cue").hidden = false;
+    document.getElementById("cue-next").addEventListener("click", show);
   }
 
-  // Drag to reorder with the handle. Pointer events cover mouse, touch, and pen.
-  function setupDrag(card) {
-    const handle = card.querySelector(".handle");
-
-    handle.addEventListener("pointerdown", (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      card.classList.add("dragging");
-      document.body.classList.add("is-dragging");
-
-      const onMove = (ev) => {
-        // Auto-scroll near the top or bottom edge of the screen.
-        const edge = 60;
-        if (ev.clientY < edge) window.scrollBy(0, -12);
-        else if (ev.clientY > window.innerHeight - edge) window.scrollBy(0, 12);
-
-        const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".card");
-        if (!target || target === card) return;
-        const cards = [...grid.children];
-        const before = cards.indexOf(card) > cards.indexOf(target);
-        grid.insertBefore(card, before ? target : target.nextSibling);
-      };
-      // Listen on the document: moving the card in the DOM would drop pointer capture on the handle.
-      const onUp = () => {
-        document.removeEventListener("pointermove", onMove);
-        document.removeEventListener("pointerup", onUp);
-        document.removeEventListener("pointercancel", onUp);
-        card.classList.remove("dragging");
-        document.body.classList.remove("is-dragging");
-        persistOrder();
-      };
-      document.addEventListener("pointermove", onMove);
-      document.addEventListener("pointerup", onUp);
-      document.addEventListener("pointercancel", onUp);
-    });
-
-    // Keyboard: arrow keys move the card one place.
-    handle.addEventListener("keydown", (e) => {
-      if (["ArrowUp", "ArrowLeft"].includes(e.key) && card.previousElementSibling) {
-        grid.insertBefore(card, card.previousElementSibling);
-      } else if (["ArrowDown", "ArrowRight"].includes(e.key) && card.nextElementSibling) {
-        grid.insertBefore(card.nextElementSibling, card);
-      } else return;
-      e.preventDefault();
-      handle.focus();
-      persistOrder();
-    });
-  }
-
-  document.getElementById("reset-order").addEventListener("click", () => {
-    const byName = Object.fromEntries([...grid.children].map(c => [c.dataset.name, c]));
-    EXERCISES.forEach(ex => grid.appendChild(byName[ex.name]));
-    persistOrder();
+  // All weeks list, newest first
+  const list = document.getElementById("weeks");
+  weeks.forEach(w => {
+    const wp = progress(w);
+    const a = document.createElement("a");
+    a.className = "week" + (wp.done === wp.total && wp.total ? " complete" : "");
+    a.href = href(w);
+    a.innerHTML = `
+      <div class="badge">${wp.done === wp.total && wp.total ? "✓" : w.number}</div>
+      <div class="info">
+        <div class="name">Week ${w.number}${w === latest ? " · current" : ""}</div>
+        <div class="sub">${wp.done} of ${wp.total} done · ${w.exercises.map(e => e.name).slice(0, 3).join(", ")}${w.exercises.length > 3 ? "…" : ""}</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <span class="chev" aria-hidden="true">›</span>`;
+    list.appendChild(a);
+    requestAnimationFrame(() => requestAnimationFrame(() => { a.querySelector(".bar i").style.width = `${wp.pct * 100}%`; }));
   });
 
-  function updateCount() {
-    document.getElementById("count").textContent = `${done.size} / ${EXERCISES.length} done`;
-  }
-  updateCount();
-
-  document.getElementById("reset").addEventListener("click", () => {
-    done.clear(); save([]);
-    document.querySelectorAll(".card").forEach(c => c.classList.remove("done"));
-    document.querySelectorAll(".check").forEach(c => c.setAttribute("aria-pressed", "false"));
-    updateCount();
-  });
-
-  // Modal player
-  const modal = document.getElementById("modal");
-  const player = document.getElementById("player");
-  const frame = document.getElementById("frame");
-  let lastFocus = null;
-
-  function openVideo(ex, v) {
-    lastFocus = document.activeElement;
-    document.getElementById("modal-title").textContent = ex.name + (v.label ? ` · ${v.label}` : "");
-    document.getElementById("modal-link").href = ytUrl(v);
-    player.classList.toggle("short", v.short);
-    frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1"
-      title="${ex.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-    modal.classList.add("open");
-    document.getElementById("close").focus();
-  }
-  function closeVideo() {
-    modal.classList.remove("open");
-    frame.innerHTML = "";
-    if (lastFocus) lastFocus.focus();
-  }
-  document.getElementById("close").addEventListener("click", closeVideo);
-  modal.addEventListener("click", (e) => { if (e.target === modal) closeVideo(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("open")) closeVideo(); });
+  // Refresh progress when returning to this page from a week (iOS restores pages from cache).
+  window.addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });
 </script>
 </body>
 </html>
