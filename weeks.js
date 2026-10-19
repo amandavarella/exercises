@@ -44,6 +44,13 @@ const WEEKS = [
         name: "Squat with a Band",
         tips: ["Band goes above the knees."],
         videos: [{ id: "ExfeIVSC1HU", short: true }]
+      },
+      {
+        name: "Arnold Press",
+        videos: [
+          { id: "ek_lFDl-pJw", short: true, label: "Standing" },
+          { id: "DskS1VzOVos", short: true, label: "Seated" }
+        ]
       }
     ]
   }
