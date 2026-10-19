@@ -201,7 +201,7 @@
     return { done, total: w.exercises.length, pct: w.exercises.length ? done / w.exercises.length : 0 };
   };
   const videoCount = (w) => w.exercises.reduce((n, e) => n + e.videos.length, 0);
-  const href = (w) => `week.html?w=${w.number}`;
+  const href = (w) => `${weekSlug(w)}/`;
 
   // Greeting and headline
   const h = new Date().getHours();

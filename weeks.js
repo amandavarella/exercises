@@ -56,6 +56,9 @@ const WEEKS = [
   }
 ];
 
+// Each week lives at /week-<number>/ (a folder made by tools/sync-weeks.js).
+const weekSlug = (w) => `week-${w.number}`;
+
 // Per-week storage of ticks and order, saved in this browser only.
 const Store = {
   get(key, fallback) {

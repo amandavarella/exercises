@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<!-- Template for every week-N/index.html. Run "node tools/sync-weeks.js" after editing. -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week · My Exercises</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Exercises">
+<meta name="description" content="Quick reference for my exercise programme. Tap any exercise to watch the demo video.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+<link rel="stylesheet" href="../week.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <a class="back" href="../">← All weeks</a>
+      <h1 id="week-title">Week</h1>
+      <p class="sub">Tap any exercise to watch the demo. Drag the ⠿ handle to reorder.</p>
+    </div>
+    <div class="progress"><span id="count"></span><button id="reset" type="button">Reset ticks</button><button id="reset-order" type="button">Reset order</button></div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>Tick each exercise off as you go. Your progress and order are saved on this device.</footer>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="player" id="player">
+    <div class="player-bar">
+      <div>
+        <h3 id="modal-title"></h3>
+        <a id="modal-link" href="#" target="_blank" rel="noopener">Open in YouTube</a>
+      </div>
+      <button class="close" id="close" type="button" aria-label="Close video">&times;</button>
+    </div>
+    <div class="frame" id="frame"></div>
+  </div>
+</div>
+
+<script src="../weeks.js"></script>
+<script src="../week.js"></script>
+</body>
+</html>
