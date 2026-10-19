@@ -14,7 +14,7 @@ const WEEKS = [
       },
       {
         name: "Pallof Press (Banded)",
-        videos: [{ id: "y1fOBVtANdM", short: false }]
+        videos: [{ id: "JEjKGg7dVVA", short: true }]
       },
       {
         name: "Standing Banded Abduction",
