@@ -4,12 +4,29 @@ const weekNum = Number((location.pathname.match(/week-(\d+)/) || [])[1]);
 const WEEK = WEEKS.find(w => w.number === weekNum);
 if (!WEEK) location.replace("../");
 const EXERCISES = WEEK ? WEEK.exercises : [];
+const SESSIONS = WEEK ? weekSessions(WEEK) : 1;
+const REPS = WEEK ? weekReps(WEEK) : [];
 document.title = `Week ${weekNum} · My Exercises`;
 document.getElementById("week-title").textContent = `Week ${weekNum}`;
 
-const load = () => Store.get(Store.doneKey(weekNum), []);
-const save = (done) => Store.set(Store.doneKey(weekNum), done);
-let done = new Set(load());
+// Session log: { "1": { name: reps|null }, "2": { ... } }
+let log = Store.get(Store.logKey(weekNum), {});
+const saveLog = () => Store.set(Store.logKey(weekNum), log);
+const entries = (s) => (log[s] = log[s] || {});
+const isDone = (s, name) => name in entries(s);
+const sessionComplete = (s) => EXERCISES.every(ex => isDone(s, ex.name));
+
+// Reps picked on a card before ticking it, per session. Kept until the page closes.
+const draft = {};
+const shownReps = (s, name) =>
+  (isDone(s, name) && entries(s)[name]) || draft[s]?.[name] || lastReps(name, WEEK, s) || REPS[0];
+
+// Open on the session you last used, unless it's finished; then the first unfinished one.
+let session = Store.get(Store.sessionKey(weekNum), 1);
+if (!(session >= 1 && session <= SESSIONS)) session = 1;
+if (sessionComplete(session)) {
+  for (let s = 1; s <= SESSIONS; s++) if (!sessionComplete(s)) { session = s; break; }
+}
 
 const loadOrder = () => Store.get(Store.orderKey(weekNum), []);
 const saveOrder = (order) => Store.set(Store.orderKey(weekNum), order);
@@ -24,13 +41,24 @@ const playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l1
 const gripIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
 const tickIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>';
 
-const grid = document.getElementById("grid");
+// Sections, in the order they first appear in weeks.js. Exercises without one go in a single unnamed section.
+const sectionsEl = document.getElementById("sections");
+const sectionNames = [...new Set(EXERCISES.map(ex => ex.section || ""))];
+const grids = {};
+sectionNames.forEach(name => {
+  const sec = document.createElement("section");
+  sec.className = "section";
+  sec.innerHTML = `${name ? `<h2 class="section-title">${name}</h2>` : ""}<div class="grid"></div>`;
+  grids[name] = sec.querySelector(".grid");
+  sectionsEl.appendChild(sec);
+});
+const allCards = () => [...document.querySelectorAll(".card")];
 
 ordered.forEach((ex) => {
   const main = ex.videos[0];
   const card = document.createElement("article");
   card.dataset.name = ex.name;
-  card.className = "card" + (done.has(ex.name) ? " done" : "");
+  card.className = "card";
   card.innerHTML = `
     <button class="thumb" type="button" aria-label="Play ${ex.name} video"
       style="background-image:url('https://i.ytimg.com/vi/${main.id}/hqdefault.jpg')">
@@ -40,8 +68,14 @@ ordered.forEach((ex) => {
     <div class="body">
       <div class="title-row">
         <button class="handle" type="button" aria-label="Reorder ${ex.name}. Drag, or use arrow keys">${gripIcon}</button>
-        <h2>${ex.name}</h2>
-        <button class="check" type="button" aria-label="Mark ${ex.name} as done" aria-pressed="${done.has(ex.name)}">${tickIcon}</button>
+        <h3>${ex.name}</h3>
+        <button class="check" type="button" aria-label="Mark ${ex.name} as done" aria-pressed="false">${tickIcon}</button>
+      </div>
+      <div class="reps-row">
+        <div class="reps" role="radiogroup" aria-label="Sets x reps for ${ex.name}">
+          ${REPS.map(r => `<button type="button" role="radio" aria-checked="false" data-reps="${r}">${r}</button>`).join("")}
+        </div>
+        <p class="other"></p>
       </div>
       ${ex.tips ? `<div class="tips">${ex.tips.map(t => `<p>${t}</p>`).join("")}</div>` : ""}
       ${ex.videos.length > 1 ? `<div class="alt">${ex.videos.map((v, j) =>
@@ -51,40 +85,90 @@ ordered.forEach((ex) => {
   card.querySelector(".thumb").addEventListener("click", () => openVideo(ex, main));
   card.querySelectorAll(".alt button").forEach(b =>
     b.addEventListener("click", () => openVideo(ex, ex.videos[+b.dataset.v])));
-  const check = card.querySelector(".check");
-  check.addEventListener("click", () => {
-    done.has(ex.name) ? done.delete(ex.name) : done.add(ex.name);
-    card.classList.toggle("done", done.has(ex.name));
-    check.setAttribute("aria-pressed", done.has(ex.name));
-    save([...done]);
+
+  // Picking reps: updates the log if already ticked, otherwise remembers it for when you tick.
+  card.querySelectorAll(".reps button").forEach(b => b.addEventListener("click", () => {
+    if (isDone(session, ex.name)) { entries(session)[ex.name] = b.dataset.reps; saveLog(); }
+    else (draft[session] = draft[session] || {})[ex.name] = b.dataset.reps;
+    renderCard(card, ex);
+  }));
+
+  card.querySelector(".check").addEventListener("click", () => {
+    const s = session;
+    if (isDone(s, ex.name)) delete entries(s)[ex.name];
+    else entries(s)[ex.name] = shownReps(s, ex.name);
+    saveLog();
+    renderCard(card, ex);
     updateCount();
     // After ticking, move on to the next unticked exercise (or the first one left above).
-    if (done.has(ex.name)) {
+    if (isDone(s, ex.name)) {
       setTimeout(() => {
-        if (!done.has(ex.name)) return; // unticked again during the pause
-        let next = card.nextElementSibling;
-        while (next && next.classList.contains("done")) next = next.nextElementSibling;
-        next = next || grid.querySelector(".card:not(.done)");
+        if (session !== s || !isDone(s, ex.name)) return; // unticked or switched session during the pause
+        const cards = allCards();
+        const next = cards.slice(cards.indexOf(card) + 1).find(c => !c.classList.contains("done"))
+          || cards.find(c => !c.classList.contains("done"));
         if (next) goTo(next, true);
       }, 450);
     }
   });
+  card._ex = ex;
   setupDrag(card);
-  grid.appendChild(card);
+  grids[ex.section || ""].appendChild(card);
 });
 renumber();
 
+// Show the current session's tick and reps on a card, plus what you logged in the other session(s).
+function renderCard(card, ex) {
+  const done = isDone(session, ex.name);
+  card.classList.toggle("done", done);
+  card.querySelector(".check").setAttribute("aria-pressed", done);
+  const reps = shownReps(session, ex.name);
+  card.querySelectorAll(".reps button").forEach(b => b.setAttribute("aria-checked", b.dataset.reps === reps));
+  const others = [];
+  for (let s = 1; s <= SESSIONS; s++) {
+    if (s !== session && isDone(s, ex.name)) others.push(`Session ${s}: ${entries(s)[ex.name] || "done"} ✓`);
+  }
+  card.querySelector(".other").textContent = others.join(" · ");
+}
+function renderAll() {
+  allCards().forEach(c => renderCard(c, c._ex));
+  renderTabs();
+  updateCount();
+}
+
+// Session tabs
+const tabs = document.getElementById("tabs");
+function renderTabs() {
+  tabs.innerHTML = "";
+  for (let s = 1; s <= SESSIONS; s++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", s === session);
+    b.innerHTML = `Session ${s}${sessionComplete(s) ? ' <span class="tab-done">✓</span>' : ""}`;
+    b.addEventListener("click", () => switchSession(s));
+    tabs.appendChild(b);
+  }
+}
+function switchSession(s) {
+  if (s === session) return;
+  session = s;
+  Store.set(Store.sessionKey(weekNum), s);
+  renderAll();
+  scrollToNext(true);
+}
+
 function renumber() {
-  grid.querySelectorAll(".card").forEach((c, i) => {
+  Object.values(grids).forEach(g => g.querySelectorAll(".card").forEach((c, i) => {
     c.querySelector(".num").textContent = String(i + 1).padStart(2, "0");
-  });
+  }));
 }
 function persistOrder() {
-  saveOrder([...grid.querySelectorAll(".card")].map(c => c.dataset.name));
+  saveOrder(allCards().map(c => c.dataset.name));
   renumber();
 }
 
-// Drag to reorder with the handle. Pointer events cover mouse, touch, and pen.
+// Drag to reorder with the handle, within a section. Pointer events cover mouse, touch, and pen.
 function setupDrag(card) {
   const handle = card.querySelector(".handle");
 
@@ -100,8 +184,9 @@ function setupDrag(card) {
       if (ev.clientY < edge) window.scrollBy(0, -12);
       else if (ev.clientY > window.innerHeight - edge) window.scrollBy(0, 12);
 
+      const grid = card.parentElement;
       const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".card");
-      if (!target || target === card) return;
+      if (!target || target === card || target.parentElement !== grid) return;
       const cards = [...grid.children];
       const before = cards.indexOf(card) > cards.indexOf(target);
       grid.insertBefore(card, before ? target : target.nextSibling);
@@ -120,8 +205,9 @@ function setupDrag(card) {
     document.addEventListener("pointercancel", onUp);
   });
 
-  // Keyboard: arrow keys move the card one place.
+  // Keyboard: arrow keys move the card one place within its section.
   handle.addEventListener("keydown", (e) => {
+    const grid = card.parentElement;
     if (["ArrowUp", "ArrowLeft"].includes(e.key) && card.previousElementSibling) {
       grid.insertBefore(card, card.previousElementSibling);
     } else if (["ArrowDown", "ArrowRight"].includes(e.key) && card.nextElementSibling) {
@@ -134,23 +220,40 @@ function setupDrag(card) {
 }
 
 document.getElementById("reset-order").addEventListener("click", () => {
-  const byName = Object.fromEntries([...grid.children].map(c => [c.dataset.name, c]));
-  EXERCISES.forEach(ex => grid.appendChild(byName[ex.name]));
+  const byName = Object.fromEntries(allCards().map(c => [c.dataset.name, c]));
+  EXERCISES.forEach(ex => grids[ex.section || ""].appendChild(byName[ex.name]));
   persistOrder();
 });
 
 function updateCount() {
-  document.getElementById("count").textContent = `${done.size} / ${EXERCISES.length} done`;
+  const done = EXERCISES.filter(ex => isDone(session, ex.name)).length;
+  document.getElementById("count").textContent =
+    `Session ${session}: ${done} / ${EXERCISES.length} done${done === EXERCISES.length ? " 🎉" : ""}`;
+  renderTabs();
 }
-updateCount();
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!Object.keys(entries(session)).length) return;
+  if (!confirm(`Clear all ticks and reps for Session ${session}?`)) return;
+  log[session] = {};
+  delete draft[session];
+  saveLog();
+  renderAll();
+});
+
+renderAll();
 
 // Jump to the first unticked exercise, so you can carry on where you left off.
 // Stop the browser restoring the old scroll position over this jump.
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-function scrollToNext() {
-  const next = grid.querySelector(".card:not(.done)");
-  if (!next || next === grid.firstElementChild) return;
-  goTo(next, false);
+function scrollToNext(smooth = false) {
+  const cards = allCards();
+  const next = cards.find(c => !c.classList.contains("done"));
+  if (!next || next === cards[0]) {
+    if (smooth) window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  goTo(next, smooth);
 }
 function goTo(next, smooth) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -161,14 +264,12 @@ function goTo(next, smooth) {
   next.addEventListener("animationend", () => next.classList.remove("next"), { once: true });
 }
 scrollToNext();
-// iOS can restore this page from memory instead of reloading it; jump again in that case.
-window.addEventListener("pageshow", (e) => { if (e.persisted) scrollToNext(); });
-
-document.getElementById("reset").addEventListener("click", () => {
-  done.clear(); save([]);
-  document.querySelectorAll(".card").forEach(c => c.classList.remove("done"));
-  document.querySelectorAll(".check").forEach(c => c.setAttribute("aria-pressed", "false"));
-  updateCount();
+// iOS can restore this page from memory instead of reloading it; reload the log and jump again in that case.
+window.addEventListener("pageshow", (e) => {
+  if (!e.persisted) return;
+  log = Store.get(Store.logKey(weekNum), {});
+  renderAll();
+  scrollToNext();
 });
 
 // Modal player

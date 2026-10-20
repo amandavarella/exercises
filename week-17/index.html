@@ -17,14 +17,16 @@
     <div>
       <a class="back" href="../">← All weeks</a>
       <h1 id="week-title">Week</h1>
-      <p class="sub">Tap any exercise to watch the demo. Drag the ⠿ handle to reorder.</p>
+      <p class="sub">Tap a video to watch. Pick your sets x reps, then tick it off.</p>
     </div>
-    <div class="progress"><span id="count"></span><button id="reset" type="button">Reset ticks</button><button id="reset-order" type="button">Reset order</button></div>
+    <div class="progress"><span id="count"></span><button id="reset" type="button">Reset session</button><button id="reset-order" type="button">Reset order</button></div>
   </header>
 
-  <main class="grid" id="grid"></main>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Session"></div>
 
-  <footer>Tick each exercise off as you go. Your progress and order are saved on this device.</footer>
+  <main id="sections"></main>
+
+  <footer>Do each session once a week. Drag the ⠿ handle to reorder. Your progress is saved on this device.</footer>
 </div>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">

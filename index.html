@@ -195,12 +195,7 @@
   const weeks = [...WEEKS].sort((a, b) => b.number - a.number);
   const latest = weeks[0];
 
-  const progress = (w) => {
-    const names = new Set(w.exercises.map(e => e.name));
-    const done = Store.get(Store.doneKey(w.number), []).filter(n => names.has(n)).length;
-    return { done, total: w.exercises.length, pct: w.exercises.length ? done / w.exercises.length : 0 };
-  };
-  const videoCount = (w) => w.exercises.reduce((n, e) => n + e.videos.length, 0);
+  const progress = weekProgress;
   const href = (w) => `${weekSlug(w)}/`;
 
   // Greeting and headline
@@ -218,7 +213,9 @@
   const thumbs = latest.exercises.slice(0, 5)
     .map(e => `<span style="background-image:url('https://i.ytimg.com/vi/${e.videos[0].id}/default.jpg')"></span>`).join("")
     + (latest.exercises.length > 5 ? `<span class="more">+${latest.exercises.length - 5}</span>` : "");
-  const cta = p.done === 0 ? "Start workout" : p.done < p.total ? "Continue workout" : "Review this week";
+  const nextSession = p.sessions.findIndex(s => s.done < s.total) + 1;
+  const cta = p.done === p.total ? "Review this week"
+    : p.sessions[nextSession - 1].done === 0 ? `Start session ${nextSession}` : `Continue session ${nextSession}`;
   const hero = document.getElementById("hero");
   hero.href = href(latest);
   hero.innerHTML = `
@@ -226,9 +223,9 @@
       <div>
         <span class="eyebrow">This week</span>
         <div class="big">Week ${latest.number}</div>
-        <p class="meta">${p.total} exercises · ${videoCount(latest)} videos</p>
+        <p class="meta">${latest.exercises.length} exercises · ${weekSessions(latest)} sessions</p>
       </div>
-      <div class="ring" role="img" aria-label="${p.done} of ${p.total} exercises done">
+      <div class="ring" role="img" aria-label="${p.done} of ${p.total} done across all sessions">
         <svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="${R}"/>
           <circle class="fg" cx="50" cy="50" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
         <div class="ring-label"><div><b>${p.done}/${p.total}</b><span>done</span></div></div>
@@ -267,7 +264,7 @@
       <div class="badge">${wp.done === wp.total && wp.total ? "✓" : w.number}</div>
       <div class="info">
         <div class="name">Week ${w.number}${w === latest ? " · current" : ""}</div>
-        <div class="sub">${wp.done} of ${wp.total} done · ${w.exercises.map(e => e.name).slice(0, 3).join(", ")}${w.exercises.length > 3 ? "…" : ""}</div>
+        <div class="sub">${wp.sessions.map((s, i) => `S${i + 1}: ${s.done}/${s.total}`).join(" · ")} · ${w.exercises.map(e => e.name).slice(0, 3).join(", ")}${w.exercises.length > 3 ? "…" : ""}</div>
         <div class="bar"><i></i></div>
       </div>
       <span class="chev" aria-hidden="true">›</span>`;
