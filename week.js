@@ -134,6 +134,22 @@ function updateCount() {
 }
 updateCount();
 
+// Jump to the first unticked exercise, so you can carry on where you left off.
+// Stop the browser restoring the old scroll position over this jump.
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+function scrollToNext() {
+  const next = grid.querySelector(".card:not(.done)");
+  if (!next || next === grid.firstElementChild) return;
+  next.scrollIntoView({ block: "start" });
+  next.classList.remove("next");
+  void next.offsetWidth; // restart the highlight animation
+  next.classList.add("next");
+  next.addEventListener("animationend", () => next.classList.remove("next"), { once: true });
+}
+scrollToNext();
+// iOS can restore this page from memory instead of reloading it; jump again in that case.
+window.addEventListener("pageshow", (e) => { if (e.persisted) scrollToNext(); });
+
 document.getElementById("reset").addEventListener("click", () => {
   done.clear(); save([]);
   document.querySelectorAll(".card").forEach(c => c.classList.remove("done"));
