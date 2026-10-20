@@ -58,6 +58,16 @@ ordered.forEach((ex) => {
     check.setAttribute("aria-pressed", done.has(ex.name));
     save([...done]);
     updateCount();
+    // After ticking, move on to the next unticked exercise (or the first one left above).
+    if (done.has(ex.name)) {
+      setTimeout(() => {
+        if (!done.has(ex.name)) return; // unticked again during the pause
+        let next = card.nextElementSibling;
+        while (next && next.classList.contains("done")) next = next.nextElementSibling;
+        next = next || grid.querySelector(".card:not(.done)");
+        if (next) goTo(next, true);
+      }, 450);
+    }
   });
   setupDrag(card);
   grid.appendChild(card);
@@ -140,7 +150,11 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 function scrollToNext() {
   const next = grid.querySelector(".card:not(.done)");
   if (!next || next === grid.firstElementChild) return;
-  next.scrollIntoView({ block: "start" });
+  goTo(next, false);
+}
+function goTo(next, smooth) {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  next.scrollIntoView({ block: "start", behavior: smooth && !reduce ? "smooth" : "auto" });
   next.classList.remove("next");
   void next.offsetWidth; // restart the highlight animation
   next.classList.add("next");
