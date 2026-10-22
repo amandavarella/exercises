@@ -3,7 +3,7 @@
 // "section" groups exercises on the week page, in the order the sections first appear.
 // "sessions" (how many times you do the week) and "reps" (the choices to log) are optional per week.
 const DEFAULT_SESSIONS = 2;
-const DEFAULT_REPS = ["2x6", "2x8", "2x10"];
+const DEFAULT_REPS = ["2x4", "2x6", "2x8", "2x10"];
 
 const WEEKS = [
   {
