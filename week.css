@@ -100,6 +100,15 @@ h1 { font-size: 1.75rem; margin: 0; letter-spacing: -.01em; }
   100% { box-shadow: var(--shadow); }
 }
 @media (prefers-reduced-motion: reduce) { .card.next { animation: none; } }
+
+.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+.toast {
+  position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 21;
+  transform: translate(-50%, 20px); opacity: 0; transition: opacity .3s, transform .3s;
+  background: var(--accent); color: #fff; font-weight: 700; padding: 12px 20px; border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2); white-space: nowrap; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 .card.dragging { opacity: .9; box-shadow: 0 12px 32px rgba(0,0,0,.25); outline: 2px solid var(--accent); position: relative; z-index: 2; }
 body.is-dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 

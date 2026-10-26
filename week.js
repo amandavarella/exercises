@@ -100,6 +100,11 @@ ordered.forEach((ex) => {
     saveLog();
     renderCard(card, ex);
     updateCount();
+    // Finishing a whole section (e.g. Upper Program 2) in this session earns confetti.
+    if (isDone(s, ex.name)) {
+      const sectionDone = EXERCISES.filter(e => (e.section || "") === (ex.section || "")).every(e => isDone(s, e.name));
+      if (sectionDone) celebrate(ex.section, sessionComplete(s) ? s : null);
+    }
     // After ticking, move on to the next unticked exercise (or the first one left above).
     if (isDone(s, ex.name)) {
       setTimeout(() => {
@@ -271,6 +276,68 @@ window.addEventListener("pageshow", (e) => {
   renderAll();
   scrollToNext();
 });
+
+// Celebration: confetti burst plus a short message.
+function celebrate(sectionName, completedSession) {
+  const big = completedSession !== null;
+  showToast(big ? `Session ${completedSession} complete! 🎉`
+    : `${sectionName || "Section"} done! 🎉`);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "confetti";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const W = innerWidth, H = innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+
+  const colors = ["#2f6f5e", "#6cc3a7", "#e8875b", "#f5c84c", "#e86a8a", "#5b8def"];
+  const pieces = [];
+  // Two cannons from the bottom corners, aimed up and inwards.
+  const count = big ? 220 : 130;
+  for (let i = 0; i < count; i++) {
+    const left = i % 2 === 0;
+    const angle = (left ? -60 : -120) * Math.PI / 180 + (Math.random() - .5) * .7;
+    const speed = 9 + Math.random() * (big ? 11 : 8);
+    pieces.push({
+      x: left ? 0 : W, y: H * .85,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+      r: Math.random() * Math.PI, vr: (Math.random() - .5) * .3,
+      color: colors[i % colors.length], life: 0
+    });
+  }
+  const start = performance.now(), duration = big ? 3800 : 3000;
+  (function frame(now) {
+    const t = now - start;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of pieces) {
+      p.vy += .28; p.vx *= .985; p.vy *= .985;
+      p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - t / duration);
+      ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2)) + 1); // flutter
+      ctx.restore();
+    }
+    if (t < duration) requestAnimationFrame(frame);
+    else canvas.remove();
+  })(start);
+}
+
+function showToast(text) {
+  document.querySelector(".toast")?.remove();
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.setAttribute("role", "status");
+  el.textContent = text;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 400); }, 3000);
+}
 
 // Modal player
 const modal = document.getElementById("modal");
