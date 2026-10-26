@@ -278,12 +278,13 @@ const player = document.getElementById("player");
 const frame = document.getElementById("frame");
 let lastFocus = null;
 
+// Videos loop until you pause or close them. YouTube only loops an embed when it is also its own playlist.
 function openVideo(ex, v) {
   lastFocus = document.activeElement;
   document.getElementById("modal-title").textContent = ex.name + (v.label ? ` · ${v.label}` : "");
   document.getElementById("modal-link").href = ytUrl(v);
   player.classList.toggle("short", v.short);
-  frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1"
+  frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&loop=1&playlist=${v.id}"
     title="${ex.name}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   modal.classList.add("open");
   document.getElementById("close").focus();
